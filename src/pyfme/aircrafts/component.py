@@ -5,6 +5,7 @@ Distributed under the terms of the MIT License.
 """
 
 import numpy as np
+from fnmatch import fnmatch
 
 
 class Structure(object):
@@ -423,6 +424,28 @@ class Component(Structure):
             Controller associated to this component
         """
         self.__controller = controller
+
+    def get_controllers(wildcard='*'):
+        """Get all the controllers of this component and children, with a name
+        matching the wildcard.
+
+        Parameters
+        ----------
+        wildcard : string
+            Name wildcard
+
+        Returns
+        -------
+        controllers : List
+            The list of matching controllers
+        """
+        controllers = []
+        for c in self.components:
+            controllers += c.get_controllers(wildcard)
+        if self.controller is not None and \
+           fnmatch(self.controller.name, wildcard):
+            controllers.append(self.controller)
+        return controllers
 
     def cog(self, use_subcomponents=True):
         """Get the cog coordinates, taking into account the mass of the
