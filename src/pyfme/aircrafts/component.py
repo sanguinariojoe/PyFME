@@ -239,45 +239,56 @@ class Component(Structure):
         """
         self.__components = partner
 
-    def cog(self):
+    def cog(self, use_subcomponents=True):
         """Get the cog coordinates, taking into account the mass of the
         subcomponents
+
+        Parameters
+        ----------
+        use_subcomponents : bool
+            Choose whether the subcomponents should be considered or not
 
         Returns
         -------
         cog : array_like
-            Center of gravity, modified by the subcomponents
+            Center of gravity, eventually modified by the subcomponents
         """
-        # Collect the cog moment of the children
+        if not use_subcomponents:
+            return super().cog
+
         m_cog = np.zeros(3, dtype=np.float)
         for c in self.components:
             m_cog += c.mass() * c.cog()
 
-        # Add the moment of the component itself
         m_cog += super().mass * super().cog
 
-        # And divide by the global mass of the component and subcomponents
         return m_cog / self.mass()
 
-    def mass(self):
+    def mass(self, use_subcomponents=True):
         """Get the component' mass, taking into account the children components
+
+        Parameters
+        ----------
+        use_subcomponents : bool
+            Choose whether the subcomponents should be considered or not
 
         Returns
         -------
         mass : float
-            Mass of the component, including all the subcomponents
+            Mass of the component, eventually including all the subcomponents
         """
-        # Collect the mass of the children
+        if not use_subcomponents:
+            return super().mass
+
         mass = 0.0
         for c in self.components:
             mass += c.mass()
 
-        # Add the mass of the component itself
         mass += super().mass
 
         return mass
 
-    def inertia(self, o=None):
+    def inertia(self, o=None, use_subcomponents=True):
         """Get the 3x3 inertia tensor respect to an specific point. See
         https://en.wikipedia.org/wiki/Parallel_axis_theorem
         This method is taking into account the subcomponents
@@ -287,38 +298,61 @@ class Component(Structure):
         o : array_like
             x, y, z coordinates of the point from which the inertia tensor
             should be computed, None if the element COG should be used
+        use_subcomponents : bool
+            Choose whether the subcomponents should be considered or not
 
         Returns
         -------
         inertia : array_like
             3x3 tensor of inertia of the component (kg * m2) for the upright
-            aircraft, repect to o point
+            aircraft, repect to o point, eventually considering the
+            subcomponents
         """
-        # Collect the inertia of the children
+        if not use_subcomponents:
+            return super().get_inertia(o)
+
+        # The parallel axis theorem, wrongly known as Steiner's theorem,
+        # requires to use the minimum Inertia point -i.e. the COG- as reference
+        # one. Otherwise, it cannot be granted the sign of the displacement
+        # Inertia moment.
+        cog = self.cog()
         inertia = np.zeros((3,3), dtype=np.float)
         for c in self.components:
-            inertia += c.inertia(o)
+            inertia += c.inertia(cog)
 
-        # Add the inertia of the component itself
-        inertia += super().get_inertia(o)
+        inertia += super().get_inertia(cog)
+
+        if o is None:
+            # That's all, this is exactly the point we have been considering
+            return inertia
+
+        r = o - cog
+        inertia += self.mass() * (np.dot(r, r) * np.eye(3) + np.outer(r, r))
 
         return inertia
 
-    def Sw(self):
+    def Sw(self, use_subcomponents=True):
         """Get the component' wetted surface, taking into account the children
         components
+
+        Parameters
+        ----------
+        use_subcomponents : bool
+            Choose whether the subcomponents should be considered or not
 
         Returns
         -------
         Sw : float
-            Wetted surface of the component, including all the subcomponents
+            Wetted surface of the component, eventually including all the
+            subcomponents
         """
-        # Collect the wetted surface of the children
+        if not use_subcomponents:
+            return super().Sw
+
         Sw = 0.0
         for c in self.components:
             Sw += c.Sw()
 
-        # Add the mass of the component itself
         Sw += super().Sw
 
         return Sw
