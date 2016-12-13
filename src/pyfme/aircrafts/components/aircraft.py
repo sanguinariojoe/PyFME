@@ -5,24 +5,29 @@ Distributed under the terms of the MIT License.
 """
 
 from pyfme.environment.environment import Environment
-from pyfme.aircrafts.aircraft import Component
+from pyfme.aircrafts import Component
 import numpy as np
+
 
 class Aircraft(Component):
     """The aircraft is a slightly special component, because it is the main
-    component, and therefore it has not a partner node.
+    component, and therefore it has not a parent node.
 
     Usually Aircraft class is just used as main node to group some subcomponents
-    like the wings, propellers, flaps...
+    like the hull, wings, propellers, flaps...
     """
-    def __init__(self, cog, mass, inertia, Sw):
-        """Create a new component
+    def __init__(self,
+                 cog=np.zeros(3, dtype=np.float),
+                 mass=0.0,
+                 inertia=np.zeros((3, 3), dtype=np.float),
+                 Sw=0.0):
+        """Create a new aircraft
 
         Parameters
         ----------
         cog : array_like
-            Local x, y, z coordinates -i.e. referered to the center of gravity
-            of partner- of the center of gravity of this element (m, m, m)
+            Local x, y, z coordinates -i.e. referered to the considered center
+            of the aircraft- of the center of gravity (m, m, m)
         mass : float
             Mass of the component (kg)
         inertia : array_like
@@ -36,6 +41,8 @@ class Aircraft(Component):
         super().__init__(cog, mass, inertia, Sw)
 
         # Velocities
+        # FIXME: Vectorial velocities should be considered to can model other
+        # aircraft types, like helicopters
         self.TAS = 0  # True Air Speed.
         self.CAS = 0  # Calibrated Air Speed.
         self.EAS = 0  # Equivalent Air Speed.
@@ -61,7 +68,7 @@ class Aircraft(Component):
         Returns
         -------
         q_inf : float
-            Sonsidered dynamic pressure at infinity (Pa)
+            Considered dynamic pressure at infinity (Pa)
         """
         return 0.5 * environment.rho * self.TAS**2
 
