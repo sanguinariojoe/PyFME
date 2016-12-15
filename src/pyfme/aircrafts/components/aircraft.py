@@ -63,7 +63,8 @@ class Aircraft(Component):
         """Get the considered dynamic pressure at infinity (Pa),
         :math:`\\frac{1}{2} \\rho \\TAS^2`
 
-        This method is required by 
+        This method is required by `pyfme.simulator`, so it is preserved for
+        backward compatibility
 
         Returns
         -------
