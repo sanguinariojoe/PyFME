@@ -56,6 +56,12 @@ class Aircraft(Component):
         # Angles
         self.alpha = 0  # rad
         self.beta = 0  # rad
+
+        # Rate of change of the angle of attack. The angle of attack can be
+        # computed as alpha = theta + atan(Uz / Ux), where theta is the pitch
+        # angle. Therefore, the rate of change can be computed as
+        # alpha_dot = p + (Ux * Uz_dot - Uz * Ux_dot) / (Ux^2 + Uz^2)
+        # where p is theta_dot
         self.alpha_dot = 0  # rad/s
 
     @property
