@@ -21,7 +21,8 @@ class Propeller(Component):
                  cog=np.zeros(3, dtype=np.float),
                  mass=0.0,
                  inertia=np.zeros((3, 3), dtype=np.float),
-                 Sw=0.0):
+                 Sw=0.0,
+                 parent=None):
         """Create a new propeller
 
         Parameters
@@ -56,8 +57,10 @@ class Propeller(Component):
             plane (x_b - z_b), thus J_xy and J_yz must be null
         Sw : float
             Wetted surface (m2)
+        parent : Component
+            Parent component which owns the current component.
         """
-        super().__init__(cog, mass, inertia, Sw)
+        super().__init__(cog, mass, inertia, Sw, parent=parent)
 
         # Velocities
         self.__r = r
