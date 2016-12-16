@@ -65,7 +65,7 @@ class Propeller(Component):
         # Velocities
         self.__r = r
         self.__delta_t = np.linspace(0, 1, num=len(omega))
-        self.__omega = omega
+        self.__omega = np.asarray(omega)
         self.__J = J
         self.__Ct = Ct
         self.__vec = vec
@@ -118,7 +118,7 @@ class Propeller(Component):
             take values between 0 and 1
         """
         self.__delta_t = np.linspace(0, 1, num=len(omega))
-        self.__omega = omega
+        self.__omega = np.asarray(omega)
 
     @property
     def J(self):
