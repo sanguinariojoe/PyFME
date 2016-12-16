@@ -47,6 +47,7 @@ class Aircraft(Component):
         self.CAS = 0  # Calibrated Air Speed.
         self.EAS = 0  # Equivalent Air Speed.
         self.Mach = 0  # Mach number
+        self.aero_vel = np.zeros(3, dtype=np.float)
 
         # Angular velocities
         self.p = 0  # rad/s
@@ -63,6 +64,7 @@ class Aircraft(Component):
         # alpha_dot = p + (Ux * Uz_dot - Uz * Ux_dot) / (Ux^2 + Uz^2)
         # where p is theta_dot
         self.alpha_dot = 0  # rad/s
+        self.beta_dot = 0  # rad/s
 
     @property
     def q_inf(self):
