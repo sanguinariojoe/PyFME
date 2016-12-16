@@ -220,7 +220,7 @@ class Propeller(Component):
 
         ff = T * self.__vec
         r = self.cog(use_subcomponents=False) - c.cog()
-        m += np.cross(r, ff)
+        mm = np.cross(r, ff)
 
         f += ff
         m += mm
