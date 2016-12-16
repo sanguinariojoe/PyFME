@@ -8,6 +8,7 @@ from pyfme.environment.environment import Environment
 from pyfme.aircrafts import Component, Controller
 from pyfme.aircrafts.components import Aircraft
 import numpy as np
+from scipy.interpolate import RectBivariateSpline
 import re
 import inspect
 
@@ -235,7 +236,8 @@ class Wing(Component):
             ignored, which may be convenient to overload this class with a more
             complex stuff.
         Cf : array_like
-            Force coefficients as a function of the angle of attack.
+            Force coefficients as a function of the angle of attack. This should
+            have the same length than ``alpha``
         name : string
             Force coeffcient name, including its dependency parameters
         """
@@ -303,6 +305,27 @@ class Wing(Component):
         CF_NAMES = "CD", "CY", "CL", "Cl", "Cm", "Cn"
         return self.__dir[CF_NAMES.index(Cf[3]) - 3]
 
+    def _raw_coeff(self, Cf, alpha):
+        """Interpolate the Force coefficient raw value, this is, before
+        modifying it by the sideslip angle, or other parameters.
+
+        This method is conveniently provided to make easier to overload the
+        ``Flap`` class, where ``alpha`` and the controller value should be used.
+
+        Parameters
+        ----------
+        Cf : dictionary
+            Force coefficient to parse
+        alpha : float
+            Angle of attack (deg)
+
+        Returns
+        -------
+        c : float
+            Raw force/moment coefficient
+        """
+        return np.interp(alpha, Cf['alphas'], Cf['values'])
+
     def __solve_coeff(self, Cf, alpha, beta, V, p, q, r, alphadot):
         """Get the Force coeffcient vectorial value, i.e. with orientation
         implicitely included.
@@ -332,7 +355,7 @@ class Wing(Component):
             Direction of the force coefficient
         """
         # First, let's interpolate the value of the raw coefficient
-        c = np.interp(alpha, Cf['alphas'], Cf['values'])
+        c = _raw_coeff(Cf, alpha)
         # Get the force direction
         vec = self.__get_coeff_vec(Cf)
         # Multiply the coeffcient by the required parameters
@@ -366,7 +389,7 @@ class Wing(Component):
 
         # Get the aircraft data
         aircraft = self.top_node()
-        assert isinstance(aircraft, Aircraft):
+        assert isinstance(aircraft, Aircraft)
         attack_angles = np.asarray(0.0,
                                    aircraft.alpha,  # rad
                                    aircraft.beta)   # rad
@@ -399,5 +422,174 @@ class Wing(Component):
                            self.__get_coeff_vec(Cf))
                 m += d * q_inf * Sw * __solve_coeff(Cf, alpha, beta,
                                                     V, p, q, r, alphadot)
+
+        return f, m
+
+
+class Flap(Wing):
+    """A flap. The flaps are basically like wings, except because:
+
+    * They are intended to be childs of a Wing
+    * If the chord, span, wetted surface, or orientation vectors are not
+      provided, they are taken from the parent ``Wing`` component.
+    * They have a controller
+    * The force/moment coefficients should be interpolated from the angle of
+      attack, ``alpha``, and the controller angle value. Therefore, the
+      Coefficients be a matrix of (m, n) dimensions, where n is the number of
+      considered alpha values and m is the number of considered deflection
+      angles (the deflection angle is edited by the controller).
+
+    The flaps can be therefore seen as "wing modifiers". Along this line, you
+    probably only want to register CL(alpha), CY(alpha), CD(alpha) force
+    coefficients and Cl(alpha), Cm(alpha) and Cn(alpha) moment coefficients
+    """
+    def __init__(self, parent, angles,
+                 controller_name='delta_flap',
+                 chord=0.0,
+                 span=0.0,
+                 Sw=0.0,
+                 chord_vec=None,
+                 span_vec=None,
+                 cog=np.zeros(3, dtype=np.float),
+                 mass=0.0,
+                 inertia=np.zeros((3, 3), dtype=np.float)):
+        """Create a new flap
+
+        Parameters
+        ----------
+        parent : Component
+            Parent component which owns the current component. It should be a
+            ``Wing``
+        angles : float
+            List of deflection angles considered for the flap (deg). The
+            controller will be set using the minimum and maximum values of this
+            parameter
+        controller_name : string
+            Name of the associated controller to be generated
+        chord : float
+            Wing chord (m). 0 if it should be extracted from the parent
+            component
+        span : float
+            Wing span (m). 0 if it should be extracted from the parent
+            component
+        Sw : float
+            Wetted surface (m2). 0 if it should be extracted from the parent
+            component
+        chord_vec : array_like
+            Direction of the wing chord. None if it should be extracted from the
+            parent component
+        span_vec : array_like
+            Direction of the wing span. None if it should be extracted from the
+            parent component
+        cog : array_like
+            Local x, y, z coordinates -i.e. referered to the considered center
+            of the aircraft- of the center of gravity (m, m, m)
+        mass : float
+            Mass of the component (kg)
+        inertia : array_like
+            3x3 tensor of inertia of the component (kg * m2) for the upright
+            aircraft.
+            Current equations assume that the global aircraft has a symmetry
+            plane (x_b - z_b), thus J_xy and J_yz must be null
+        """
+        super().__init__(chord, span, Sw, parent,
+                         chord_vec=chord_vec,
+                         span_vec=span_vec,
+                         cog=cog,
+                         mass=mass,
+                         inertia=inertia)
+
+        self.controller = Controller(controller_name,
+                                     np.min(angles),
+                                     np.max(angles))
+        self.__angles = angles()
+
+    @property
+    def angles(self):
+        """List of deflection angles considered for the flap (deg)
+
+        Returns
+        -------
+        angles : float
+            List of deflection angles considered for the flap (deg). The
+            controller will be set using the minimum and maximum values of this
+            parameter
+        """
+        return self.__angles = angles
+
+    @chord.setter
+    def angles(self, span_vec):
+        """Set the list of deflection angles considered for the flap (deg)
+
+        Parameters
+        ----------
+        angles : float
+            List of deflection angles considered for the flap (deg). The
+            controller will be set using the minimum and maximum values of this
+            parameter
+        """
+        self.__angles = angles
+
+    def _raw_coeff(self, Cf, alpha):
+        """Interpolate the Force coefficient raw value, this is, before
+        modifying it by the sideslip angle, or other parameters.
+
+        Conversely to the wing, where the force/moment coefficient depends only
+        on the attack angle ``alpha``, here another dependency on the controller
+        value should be considered.
+
+        Hence, the force/moment coefficients be a matrix of (m, n) dimensions,
+        where n is the number of considered alpha values and m is the number of
+        considered deflection angles, ``self.angles``.
+
+        Parameters
+        ----------
+        Cf : dictionary
+            Force coefficient to parse
+        alpha : float
+            Angle of attack (deg)
+
+        Returns
+        -------
+        c : float
+            Raw force/moment coefficient
+        """
+        interpolator = RectBivariateSpline(self.__angles,
+                                           Cf['alphas'],
+                                           Cf['values'])
+        return interpolator(controller.value, alpha)
+
+    def calculate_forces_and_moments(self):
+        """Compute the forces and moments of the global aircraft collecting all
+        the subcomponents, and adding the volumetric/gravity force
+        """
+        wing = self.parent
+        # Get the partner parameters
+        if not self.chord:
+            assert isinstance(wing, Wing)
+            self.chord = wing.chord
+        if not self.span:
+            assert isinstance(wing, Wing)
+            self.span = wing.span
+        if self.chord_vec is None:
+            assert isinstance(wing, Wing)
+            self.chord_vec = wing.chord_vec
+        if self.span_vec is None:
+            assert isinstance(wing, Wing)
+            self.span_vec = wing.span_vec
+        # The wetted surface is a bit more delicated, because if someone else
+        # is asking for the wetted surface, we want to say it is null
+        is_Sw_zero = not self.Sw(use_subcomponents=False)
+        if is_Sw_zero:
+            assert isinstance(wing, Wing)
+            super(Structure, self).Sw = wing.Sw(use_subcomponents=False)
+
+        # Compute the forces and moments
+        f, m = super(Wing, self).calculate_forces_and_moments()
+
+        # Restore the wetted surface
+        if is_Sw_zero:
+            assert isinstance(wing, Wing)
+            super(Structure, self).Sw = 0.0
 
         return f, m
