@@ -590,7 +590,7 @@ class Component(Structure):
         for c in self.components:
             ff, mm = c.calculate_forces_and_moments()
             # Displace the moment to the new application point
-            r = cog - c.cog()
+            r = cog - c.cog(use_subcomponents=False)
             mm += np.cross(r, ff)
             # And integrate the forces
             f += ff

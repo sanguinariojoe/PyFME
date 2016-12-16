@@ -219,9 +219,7 @@ class Propeller(Component):
         T = (2.0 / np.pi)**2 * rho * (omega_RAD * self.__r)**2 * Ct  # N
 
         ff = T * self.__vec
-        r = self.cog(use_subcomponents=False) - c.cog()
+        r = self.cog(use_subcomponents=False) - self.cog()
         mm = np.cross(r, ff)
 
-        f += ff
-        m += mm
-        return f, m
+        return f + ff, m + mm

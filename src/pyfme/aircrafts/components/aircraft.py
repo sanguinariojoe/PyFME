@@ -86,5 +86,10 @@ class Aircraft(Component):
         the subcomponents, and adding the volumetric/gravity force
         """
         f, m = super().calculate_forces_and_moments()
-        f += environment.gravity_vector * self.mass()
-        return f, m
+
+        # Add the gravity, which is applied in the global center of gravity
+        ff = environment.gravity_vector * self.mass()
+        r = self.cog(use_subcomponents=False) - c.cog()
+        mm = np.cross(r, ff)
+
+        return f + ff, m + mm
