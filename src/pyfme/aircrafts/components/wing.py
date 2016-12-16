@@ -8,6 +8,12 @@ from pyfme.environment.environment import Environment
 from pyfme.aircrafts import Component, Controller
 from pyfme.aircrafts.components import Aircraft
 import numpy as np
+import re
+import inspect
+
+
+CF_NAMES = "CD", "CY", "CL", "Cl", "Cm", "Cn"
+CF_TYPES = ["f"] * 3 + ["m"] * 3
 
 
 class Wing(Component):
@@ -18,7 +24,12 @@ class Wing(Component):
     The usual way to use the wing is manually providing the force coefficients.
     However, this tool can be used as well as an abstract class to create a more
     sophisticate method, e.g. a CFD based forces computation.
-    If a force coefficient is not provided, it will be considered null.
+
+    Along this line, in order to compute the moments you can either set the wing
+    cog as null vector, i.e. the same center of gravity of the partner component
+    is considered, conveniently setting the moment coefficients, or you can
+    alternatively set the actual forces application point such that the moments
+    will be automatically computed.
 
     This class may not work alone, but it should be a child of an Aircraft.
     Otherwise an assertion error will be raised.
@@ -26,25 +37,6 @@ class Wing(Component):
     def __init__(self, chord, span, Sw, parent,
                  chord_vec=np.asarray([1, 0, 0]),
                  span_vec=np.asarray([0, 1, 0]),
-                 alpha=None,
-                 CL=None,
-                 CY=None,
-                 CD=None,
-                 Cl=None,
-                 Cm=None,
-                 Cn=None,
-                 CL_q=None,
-                 CY_q=None,
-                 CD_q=None,
-                 Cl_q=None,
-                 Cm_q=None,
-                 Cn_q=None,
-                 CL_alphadot=None,
-                 CY_alphadot=None,
-                 CD_alphadot=None,
-                 Cl_alphadot=None,
-                 Cm_alphadot=None,
-                 Cn_alphadot=None,
                  cog=np.zeros(3, dtype=np.float),
                  mass=0.0,
                  inertia=np.zeros((3, 3), dtype=np.float)):
@@ -64,45 +56,6 @@ class Wing(Component):
             Direction of the wing chord
         span_vec : array_like
             Direction of the wing span
-        alpha : array_like
-            List of considered values for the angle of attack to interpolate the
-            force coefficients
-        CL : array_like
-            Lift force coefficients as a function of the angle of attack.
-            Lift force acts along ``np.cross(chord_vec, span_vec)``
-        CY : array_like
-            Lateral force coefficients as a function of the angle of attack.
-            Lateral force acts along ``span_vec``, and depends on the yaw angle,
-            ``beta``, of the aircraft
-        CD : array_like
-            Drag force coefficients as a function of the angle of attack.
-            Drag is a negative force along ``chord_vec``
-        CL_q : array_like
-            Lift force coefficients as a function of the angle of attack, due to
-            the Pitch rate of change.
-            Lift force acts along ``np.cross(chord_vec, span_vec)``
-        CY_q : array_like
-            Lateral force coefficients as a function of the angle of attack, due
-            to the Pitch rate of change.
-            Lateral force acts along ``span_vec``, and depends on the yaw angle,
-            ``beta``, of the aircraft
-        CD_q : array_like
-            Drag force coefficients as a function of the angle of attack, due to
-            the Pitch rate of change.
-            Drag is a negative force along ``chord_vec``
-        CL_alphadot : array_like
-            Lift force coefficients as a function of the angle of attack, due to
-            the angle of attack rate of change.
-            Lift force acts along ``np.cross(chord_vec, span_vec)``
-        CY_alphadot : array_like
-            Lateral force coefficients as a function of the angle of attack, due
-            to the angle of attack rate of change.
-            Lateral force acts along ``span_vec``, and depends on the yaw angle,
-            ``beta``, of the aircraft
-        CD_alphadot : array_like
-            Drag force coefficients as a function of the angle of attack, due to
-            the angle of attack rate of change.
-            Drag is a negative force along ``chord_vec``
         cog : array_like
             Local x, y, z coordinates -i.e. referered to the considered center
             of the aircraft- of the center of gravity (m, m, m)
@@ -122,20 +75,329 @@ class Wing(Component):
         self.__dir = np.array([chord_vec,
                                span_vec,
                                np.cross(chord_vec, span_vec)])
-        self.__alpha = alpha
-        self.__CL = CL
-        self.__CY = CY
-        self.__CD = CD
-        self.__CL_q = CL_q
-        self.__CY_q = CY_q
-        self.__CD_q = CD_q
-        self.__CL_alphadot = CL_alphadot
-        self.__CY_alphadot = CY_alphadot
-        self.__CD_alphadot = CD_alphadot
+        self.__Cf = []
+
+    @property
+    def chord(self):
+        """Wing chord (m)
+
+        Returns
+        -------
+        chord : float
+            Wing chord (m)
+        """
+        return self.__chord
+
+    @chord.setter
+    def chord(self, chord):
+        """Set the wing chord (m)
+
+        Parameters
+        ----------
+        chord : float
+            Wing chord (m)
+        """
+        self.__chord = chord
+
+    @property
+    def span(self):
+        """Wing span (m)
+
+        Returns
+        -------
+        span : float
+            Wing span (m)
+        """
+        return self.__span
+
+    @chord.setter
+    def span(self, span):
+        """Set the wing span (m)
+
+        Parameters
+        ----------
+        span : float
+            Wing span (m)
+        """
+        self.__span = span
+
+    @property
+    def chord_vec(self):
+        """Chord direction vector
+
+        Returns
+        -------
+        chord_vec : array_like
+            Direction of the wing span
+        """
+        return self.__dir[0]
+
+    @chord.setter
+    def chord_vec(self, span_vec):
+        """Set the chord direction vector
+
+        Parameters
+        ----------
+        chord_vec : array_like
+            Direction of the wing span
+        """
+        self.__dir = np.array([chord_vec,
+                               self.__dir[1],
+                               np.cross(chord_vec, self.__dir[1])])
+
+    @property
+    def span_vec(self):
+        """Span direction vector
+
+        Returns
+        -------
+        span_vec : array_like
+            Direction of the wing span
+        """
+        return self.__dir[1]
+
+    @chord.setter
+    def span_vec(self, span_vec):
+        """Set the span direction vector
+
+        Parameters
+        ----------
+        span_vec : array_like
+            Direction of the wing span
+        """
+        self.__dir = np.array([self.__dir[0],
+                               span_vec,
+                               np.cross(self.__dir[0], span_vec)])
+
+    def add_force_coeff(self, alpha, Cf, name):
+        """Register a new force coefficient. The force coefficients are defined
+        respect to the cog, and are undimensionalized with the total wetted
+        area, i.e. the wetted are of this component and all the children.
+
+        In order to register a force coefficient a variable name should be
+        provided, which may be one of the following:
+
+        CL(alpha)
+            Lift force coefficient as a function of the angle of attack.
+            Lift force acts along ``np.cross(chord_vec, span_vec)``
+        CY(alpha)
+            Lateral force coefficient as a function of the angle of attack.
+            Lateral force acts along ``span_vec``, and depends on the sideslip
+            angle, ``beta``, of the aircraft
+        CD(alpha)
+            Drag force coefficient as a function of the angle of attack.
+            Drag is a negative force along ``chord_vec``
+        Cl(alpha)
+            Roll moment coefficient as a function of the angle of attack.
+            Roll moment acts along ``chord_vec``, and depends on the sideslip
+            angle, ``beta``, of the aircraft
+        Cm(alpha)
+            Pitch moment coefficient as a function of the angle of attack.
+            Pitch moment acts along ``span_vec``
+        Cn(alpha)
+            Yaw moment coefficient as a function of the angle of attack.
+            Yaw moment acts along ``np.cross(chord_vec, span_vec)``, and depends
+            on the sideslip angle, ``beta``, of the aircraft
+        CL(alpha, param)
+            Lift force coefficients as a function of the angle of attack, due
+            to the selected parameter ``param``.
+            Lift force acts along ``np.cross(chord_vec, span_vec)``
+        CY(alpha, param)
+            Lateral force coefficients as a function of the angle of attack, due
+            to the selected parameter ``param``.
+            Lateral force acts along ``span_vec``
+        CD(alpha, param)
+            Drag force coefficients as a function of the angle of attack, due
+            to the selected parameter ``param``.
+            Drag is a negative force along ``chord_vec``
+        Cl(alpha, param)
+            Roll moment coefficient as a function of the angle of attack, due
+            to the selected parameter ``param``.
+            Roll moment acts along ``chord_vec``
+        Cm(alpha, param)
+            Pitch moment coefficient as a function of the angle of attack, due
+            to the selected parameter ``param``.
+            Pitch moment acts along ``span_vec``
+        Cn(alpha, param)
+            Yaw moment coefficient as a function of the angle of attack, due
+            to the selected parameter ``param``.
+            Yaw moment acts along ``np.cross(chord_vec, span_vec)``
+
+        The available parameters ``param`` are ``p``, ``q``, ``r`` and
+        ``alphadot``, the rate of change of Roll, Pitch, Yaw, and angles of
+        attack respectively.
+
+        Parameters
+        ----------
+        alpha : array_like
+            List of considered values for the angle of attack to interpolate the
+            force coefficients. If this is None, all the force coefficients are
+            ignored, which may be convenient to overload this class with a more
+            complex stuff.
+        Cf : array_like
+            Force coefficients as a function of the angle of attack.
+        name : string
+            Force coeffcient name, including its dependency parameters
+        """
+        params = "p", "q", "r", "alphadot"
+        def get_available_names():
+            l = []
+            for n in CF_NAMES:
+                l.append(n + "(alpha)")
+                for p in params:
+                    l.append(n + "(alpha, " + p + ")")
+            return l
+
+        # Get the variable name and parameters
+        pattern = r'(\w[\w\d_]*)\((.*)\)$'
+        match = re.match(pattern, name.replace(" ", ""))
+        if not match:
+            raise ValueError("Can't parse expression '{}'".format(name))
+        groups = match.groups()
+        if len(groups) != 2:
+            raise ValueError(
+                "Can't split expression '{}' in name and params".format(name))
+        cname = groups[0]
+        params = groups[1].split(',')
+        if name not in names or len(params) > 2 or 'alpha' not in params:
+            raise ValueError(
+                "Invalid name '{}'. The valid ones are: {}".format(
+                    name, get_available_names()))
+
+        param = params[params.index("alpha") - 1] if len(params) == 2 else None
+
+        self.__Cf.append({'alphas':np.asarray(alpha),
+                          'values'np.asarray(Cf),
+                          'name':cname,
+                          'param':param})
+
+    def __get_coeff_type(self, Cf):
+        """Report whether it is a force coefficient or a moment coefficient
+
+        Parameters
+        ----------
+        Cf : dictionary
+            Force/Moment coefficient to parse
+
+        Returns
+        -------
+        type_coeff : string
+            'f' if it is a force coefficient, 'm' otherwise
+        """
+        CF_NAMES = "CD", "CY", "CL", "Cl", "Cm", "Cn"
+        return CF_TYPES[CF_NAMES.index(Cf[3])]
+
+    def __get_coeff_vec(self, Cf):
+        """Get the direction of an specific force coefficient by its name
+
+        Parameters
+        ----------
+        Cf : dictionary
+            Force coefficient to parse
+
+        Returns
+        -------
+        vec : array_like
+            Direction of the force coefficient
+        """
+        CF_NAMES = "CD", "CY", "CL", "Cl", "Cm", "Cn"
+        return self.__dir[CF_NAMES.index(Cf[3]) - 3]
+
+    def __solve_coeff(self, Cf, alpha, beta, V, p, q, r, alphadot):
+        """Get the Force coeffcient vectorial value, i.e. with orientation
+        implicitely included.
+
+        Parameters
+        ----------
+        Cf : dictionary
+            Force coefficient to parse
+        alpha : float
+            Angle of attack (deg)
+        beta : float
+            Slideslip angle (deg)
+        V : float
+            True Air Speed (m/s)
+        p : float
+            Roll rate of change (rad/s)
+        q : float
+            Pitch rate of change (rad/s)
+        r : float
+            Yaw rate of change (rad/s)
+        alphadot : float
+            Angle of attack rate of change (rad/s)
+
+        Returns
+        -------
+        vec : array_like
+            Direction of the force coefficient
+        """
+        # First, let's interpolate the value of the raw coefficient
+        c = np.interp(alpha, Cf['alphas'], Cf['values'])
+        # Get the force direction
+        vec = self.__get_coeff_vec(Cf)
+        # Multiply the coeffcient by the required parameters
+        if Cf['param'] is None:
+            if Cf['name'] in ('CY', 'Cl', 'Cn'):
+                # Special case of transversal force, roll moment and yaw moment,
+                # which depends on the sideslip angle
+                c *= beta
+        else:
+            # Get the characteristic length (chord or span)
+            d = np.dot((self.span, self.span, self.chord), vec)
+            # Get the required paramater
+            frame = inspect.currentframe()
+            args, _, _, values = inspect.getargvalues(frame)
+            param = values[args.index(Cf['param'])]
+            # And get the final equivalent force coeff
+            c *= d / (2 * V) * param
+
+        # Return it as a vector
+        return c * vec
 
     def calculate_forces_and_moments(self):
         """Compute the forces and moments of the global aircraft collecting all
         the subcomponents, and adding the volumetric/gravity force
         """
         f, m = super().calculate_forces_and_moments()
+
+        if self.__alpha is None or not len(self.__alpha):
+            # Special case where the user don't want to use the coeffs stuff
+            return f, m
+
+        # Get the aircraft data
+        aircraft = self.top_node()
+        assert isinstance(aircraft, Aircraft):
+        attack_angles = np.asarray(0.0,
+                                   aircraft.alpha,  # rad
+                                   aircraft.beta)   # rad
+        attack_angles_dot = np.asarray(0.0,
+                                       aircraft.alphadot,  # rad/s
+                                       aircraft.betadot)   # rad/s
+        p = aircraft.p  # rad/s
+        q = aircraft.q  # rad/s
+        r = aircraft.r  # rad/s
+        # FIXME: Vectorial velocities should be considered to can model other
+        # aircraft types, like helicopters
+        V = aircraft.TAS  # m/s
+        q_inf = aircraft.q_inf  # Pa
+
+        # Get the angle of attack (the angle along the span direction)
+        alpha = np.rad2deg(np.dot(attack_angles, self.__dir[1]))  # deg
+        alphadot = np.dot(attack_angles_dot, self.__dir[1])       # rad/s
+        # Get the sideslip angle (the angle along the "z" direction)
+        beta = np.dot(attack_angles, self.__dir[2])               # rad
+
+        # Compute the forces from the force coefficients
+        for Cf in self.__Cf:
+            Sw = self.Sw()
+            if __get_coeff_type(Cf) == 'f':
+                f += q_inf * Sw * __solve_coeff(Cf, alpha, beta,
+                                                V, p, q, r, alphadot)
+            else self.__get_coeff_type(Cf) == 'm':
+                # The moments should be multiplied by the chord or the span
+                d = np.dot((self.span, self.chord, self.span),
+                           self.__get_coeff_vec(Cf))
+                m += d * q_inf * Sw * __solve_coeff(Cf, alpha, beta,
+                                                    V, p, q, r, alphadot)
+
         return f, m
