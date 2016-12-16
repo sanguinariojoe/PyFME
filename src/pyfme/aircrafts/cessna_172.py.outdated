@@ -3,15 +3,17 @@
 Python Flight Mechanics Engine (PyFME).
 Copyright (c) AeroPython Development Team.
 Distributed under the terms of the MIT License.
-"""
-import numpy as np
-from scipy.interpolate import RectBivariateSpline
+----------
+Cessna 172
+----------
 
-from pyfme.models.constants import ft2m, slugft2_2_kgm2, lbs2kg
-from pyfme.utils.coordinates import wind2body
-from pyfme.aircrafts.components import Aircraft, Propeller, Wing, Flap
-
-
+References
+----------
+[1] ROSKAM, J., Methods for Estimating Stability and Control
+    Derivatives of Conventional Subsonic Airplanes
+[2] McDonnell Douglas Co., The USAF and Stability and Control
+    Digital DATCOM, Users Manual
+----------
 
 CD            - drag coefficient as fhunction of the angle of attack via [2]
 CD_delta_elev - incremental induced-drag coefficient as function of the angle
@@ -70,60 +72,22 @@ CN_delta_rud  - yawing moment coefficient derivative with respect to the
 CN_delta_aile - incremental yawing moment coefficient derivative with respect
                 to the aileron deflection as a function of the aileron
                 deflection and the angle of attack via [2]
+"""
+import numpy as np
+from scipy.interpolate import RectBivariateSpline
 
-
+from pyfme.aircrafts.aircraft import Aircraft
+from pyfme.models.constants import ft2m, slugft2_2_kgm2, lbs2kg
+from pyfme.utils.coordinates import wind2body
 
 
 class Cessna172(Aircraft):
     """
     Cessna 172
-
-    The Cessna 172 aircraft is build using the force and moment coefficients
-    described in [1] and [2]. Therefore, since all the coefficients are provided
-    considering the entire aircraft, the easiest way to build it up is:
-    1.- Create the aircraft with the known mass and inertia
-    2.- Add it the known propeller
-    3.- Add a single wing, which is representing the wings and the stabilizers
-    4.- Register all the known coeffs to the wing
-    5.- Create the elevators, alerions and rudder, all of them childs of the
-        wing.
-    6.- Register their coeffcients
-
-    References
-    ----------
-    [1] ROSKAM, J., Methods for Estimating Stability and Control
-        Derivatives of Conventional Subsonic Airplanes
-    [2] McDonnell Douglas Co., The USAF and Stability and Control
-        Digital DATCOM, Users Manual
+    The Cessna 172 is a blablabla...
     """
 
     def __init__(self):
-        # We set directly in the aircraft the total mass and inertia. The wetted
-        # surface is relegated to the wing
-        super().__init__(mass=2300*lbs2kg,
-                         inertia=np.diag([948, 1346, 1967])*slugft2_2_kgm2)
-
-        # Setup the propeller
-        prop_radius = 0.94  # m
-        omega = [1000.0, 2800.0]  # RPM
-        J = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.76, 0.77, 0.78, 0.79, 0.8, 0.81, 0.82, 0.83, 0.84, 0.85, 0.86, 0.87, 0.88, 0.89, 0.9, 0.91, 0.92, 0.93, 0.94]
-        Ct = [0.102122, 0.11097, 0.107621, 0.105191, 0.102446, 0.09947, 0.096775, 0.094706, 0.092341, 0.088912, 0.083878, 0.076336, 0.066669, 0.056342, 0.045688, 0.034716, 0.032492, 0.030253, 0.028001, 0.025735, 0.023453, 0.021159, 0.018852, 0.016529, 0.014194, 0.011843, 0.009479, 0.0071, 0.004686, 0.002278, -0.0002, -0.002638, -0.005145, -0.007641, -0.010188]
-        self.components.append(Propeller(parent=self,
-                                         r=prop_radius,
-                                         omega=omega,
-                                         J=J,
-                                         Ct=Ct))
-
-        # Setup the wings and stabilizers in a single wing
-        chord = 1.49352  # m
-        span = 10.91184  # m
-        Sw = 16.2        # m2
-        self.components.append(Wing(chord, span, Sw, parent))
-
-        # Register the coefficients of the wing
-
-
-
 
         # Mass & Inertia
         self.mass = 2300 * lbs2kg   # kg
