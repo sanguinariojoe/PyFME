@@ -391,10 +391,6 @@ class Wing(Component):
         """
         f, m = super().calculate_forces_and_moments()
 
-        if self.__alpha is None or not len(self.__alpha):
-            # Special case where the user don't want to use the coeffs stuff
-            return f, m
-
         # Get the aircraft data
         aircraft = self.top_node()
         assert isinstance(aircraft, Aircraft)
