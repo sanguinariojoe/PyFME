@@ -15,6 +15,7 @@ import inspect
 
 CF_NAMES = "CD", "CY", "CL", "Cl", "Cm", "Cn"
 CF_TYPES = ["f"] * 3 + ["m"] * 3
+CF_PARAMS = "p", "q", "r", "alphadot"
 
 
 class Wing(Component):
@@ -241,12 +242,11 @@ class Wing(Component):
         name : string
             Force coeffcient name, including its dependency parameters
         """
-        params = "p", "q", "r", "alphadot"
         def get_available_names():
             l = []
             for n in CF_NAMES:
                 l.append(n + "(alpha)")
-                for p in params:
+                for p in CF_PARAMS:
                     l.append(n + "(alpha, " + p + ")")
             return l
 
@@ -261,7 +261,7 @@ class Wing(Component):
                 "Can't split expression '{}' in name and params".format(name))
         cname = groups[0]
         params = groups[1].split(',')
-        if name not in names or len(params) > 2 or 'alpha' not in params:
+        if cname not in CF_NAMES or len(params) > 2 or 'alpha' not in params:
             raise ValueError(
                 "Invalid name '{}'. The valid ones are: {}".format(
                     name, get_available_names()))
