@@ -522,7 +522,7 @@ class Flap(Wing):
             controller will be set using the minimum and maximum values of this
             parameter
         """
-        return self.__angles = angles
+        return self.__angles
 
     @chord.setter
     def angles(self, span_vec):
