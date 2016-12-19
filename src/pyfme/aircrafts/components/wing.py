@@ -524,8 +524,8 @@ class Flap(Wing):
         """
         return self.__angles
 
-    @chord.setter
-    def angles(self, span_vec):
+    @angles.setter
+    def angles(self, angles):
         """Set the list of deflection angles considered for the flap (deg)
 
         Parameters
