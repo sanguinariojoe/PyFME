@@ -304,7 +304,7 @@ class Wing(Component):
             Direction of the force coefficient
         """
         CF_NAMES = "CD", "CY", "CL", "Cl", "Cm", "Cn"
-        return self.__dir[CF_NAMES.index(Cf[3]) - 3]
+        return self.__dir[CF_NAMES.index(Cf['name']) - 3]
 
     def _raw_coeff(self, Cf, alpha):
         """Interpolate the Force coefficient raw value, this is, before
