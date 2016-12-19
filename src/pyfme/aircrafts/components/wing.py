@@ -6,6 +6,7 @@ Distributed under the terms of the MIT License.
 
 from pyfme.environment.environment import Environment
 from pyfme.aircrafts import Component, Controller
+from pyfme.aircrafts.component import Structure
 from pyfme.aircrafts.components import Aircraft
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
@@ -602,14 +603,14 @@ class Flap(Wing):
         is_Sw_zero = not self.Sw(use_subcomponents=False)
         if is_Sw_zero:
             assert isinstance(wing, Wing)
-            super(Structure, self).Sw = wing.Sw(use_subcomponents=False)
+            Structure.Sw.fset(self, wing.Sw(use_subcomponents=False))
+            print(self.Sw(use_subcomponents=False))
 
         # Compute the forces and moments
-        f, m = super(Wing, self).calculate_forces_and_moments()
+        f, m = super().calculate_forces_and_moments()
 
         # Restore the wetted surface
         if is_Sw_zero:
-            assert isinstance(wing, Wing)
-            super(Structure, self).Sw = 0.0
+            Structure.Sw.fset(self, 0.0)
 
         return f, m
