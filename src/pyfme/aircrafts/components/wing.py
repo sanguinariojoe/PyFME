@@ -394,12 +394,12 @@ class Wing(Component):
         # Get the aircraft data
         aircraft = self.top_node()
         assert isinstance(aircraft, Aircraft)
-        attack_angles = np.asarray(0.0,
-                                   aircraft.alpha,  # rad
-                                   aircraft.beta)   # rad
-        attack_angles_dot = np.asarray(0.0,
-                                       aircraft.alpha_dot,  # rad/s
-                                       aircraft.beta_dot)   # rad/s
+        attack_angles = np.asarray([0.0,
+                                    aircraft.alpha,  # rad
+                                    aircraft.beta])  # rad
+        attack_angles_dot = np.asarray([0.0,
+                                        aircraft.alpha_dot,  # rad/s
+                                        aircraft.beta_dot})  # rad/s
         p = aircraft.p  # rad/s
         q = aircraft.q  # rad/s
         r = aircraft.r  # rad/s
@@ -600,7 +600,6 @@ class Flap(Wing):
         if is_Sw_zero:
             assert isinstance(wing, Wing)
             Structure.Sw.fset(self, wing.Sw(use_subcomponents=False))
-            print(self.Sw(use_subcomponents=False))
 
         # Compute the forces and moments
         f, m = super().calculate_forces_and_moments()
