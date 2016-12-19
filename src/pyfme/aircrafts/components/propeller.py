@@ -17,7 +17,7 @@ class Propeller(Component):
     """
     def __init__(self, r, omega, J, Ct,
                  vec=np.asarray([1, 0, 0]),
-                 controller_name='delta_t'
+                 controller_name='delta_t',
                  cog=np.zeros(3, dtype=np.float),
                  mass=0.0,
                  inertia=np.zeros((3, 3), dtype=np.float),
