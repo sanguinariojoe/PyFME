@@ -90,7 +90,7 @@ class Cessna172(Aircraft):
         CL_q = [7.282, 7.282, 7.282, 7.282, 7.282, 7.282, 7.282, 7.282, 7.282, 7.282, 7.282, 7.282]
         Cm_q = [-6.232, -6.232, -6.232, -6.232, -6.232, -6.232, -6.232, -6.232, -6.232, -6.232, -6.232, -6.232]
         # FIXME: CM_q multiplicado por 2 hasta que alpha_dot pueda ser calculado
-        Cm_q *= 2
+        Cm_q = 2 * np.array(Cm_q)
         wing.add_force_coeff(alpha, CL_q, "CL(alpha, q)")
         wing.add_force_coeff(alpha, Cm_q, "Cm(alpha, q)")
         # Lateral force, roll moment and yaw moment due to the attack angle, and
