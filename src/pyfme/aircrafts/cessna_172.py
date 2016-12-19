@@ -98,17 +98,17 @@ class Cessna172(Aircraft):
         CY_p = [-0.032, -0.0372, -0.0418, -0.0463, -0.051, -0.0563, -0.0617, -0.068, -0.0783, -0.0812, -0.0824, -0.083]
         Cl_p = [-0.4968, -0.4678, -0.4489, -0.4595, 0.487, -0.5085, -0.5231, -0.4916, -0.301, -0.203, -0.1498, -0.0671]
         Cn_p = [0.03, 0.016, 0.00262, -0.0108, -0.0245, -0.0385, -0.0528, -0.0708, -0.113, -0.1284, -0.1356, -0.1422]
-        wing.add_force_coeff(alpha, CL_q, "CY(alpha, p)")
-        wing.add_force_coeff(alpha, Cm_q, "Cl(alpha, p)")
-        wing.add_force_coeff(alpha, Cm_q, "Cn(alpha, p)")
+        wing.add_force_coeff(alpha, CY_p, "CY(alpha, p)")
+        wing.add_force_coeff(alpha, Cl_p, "Cl(alpha, p)")
+        wing.add_force_coeff(alpha, Cn_p, "Cn(alpha, p)")
         # Lateral force, roll moment and yaw moment due to the attack angle, and
         # yaw rotation (see [2]).
         CY_r = [0.2018, 0.2054, 0.2087, 0.2115, 0.2139, 0.2159, 0.2175, 0.2187, 0.2198, 0.2198, 0.2196, 0.2194]
         Cl_r = [-0.09675, -0.05245, -0.01087, 0.02986, 0.07342, 0.1193, 0.1667, 0.2152, 0.2909, 0.3086, 0.3146, 0.3197]
         Cn_r = [-0.028, -0.027, -0.027, -0.0275, -0.0293, -0.0325, -0.037, -0.043, -0.05484, -0.058, -0.0592, -0.06015]
-        wing.add_force_coeff(alpha, CL_r, "CY(alpha, r)")
-        wing.add_force_coeff(alpha, Cm_r, "Cl(alpha, r)")
-        wing.add_force_coeff(alpha, Cm_r, "Cn(alpha, r)")
+        wing.add_force_coeff(alpha, CY_r, "CY(alpha, r)")
+        wing.add_force_coeff(alpha, Cl_r, "Cl(alpha, r)")
+        wing.add_force_coeff(alpha, Cn_r, "Cn(alpha, r)")
         
         # Create the elevators as a single component inside the wing
         elevator = Flap(wing, [-26, -20, -10, -5, 0, 7.5, 15, 22.5, 28],

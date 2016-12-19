@@ -399,7 +399,7 @@ class Component(Structure):
         components : list
             List of components belonging to this one
         """
-        self.__components = parent
+        self.__components = components
 
     @property
     def controller(self):
