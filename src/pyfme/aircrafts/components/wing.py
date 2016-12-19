@@ -499,14 +499,12 @@ class Flap(Wing):
             Current equations assume that the global aircraft has a symmetry
             plane (x_b - z_b), thus J_xy and J_yz must be null
         """
-        print(chord_vec, span_vec)
         if chord_vec is None:
             assert isinstance(parent, Wing)
             chord_vec = parent.chord_vec
         if span_vec is None:
             assert isinstance(parent, Wing)
             span_vec = parent.span_vec
-        print(chord_vec, span_vec)
         super().__init__(chord, span, Sw, parent,
                          chord_vec=chord_vec,
                          span_vec=span_vec,
@@ -517,7 +515,7 @@ class Flap(Wing):
         self.controller = Controller(controller_name,
                                      np.min(angles),
                                      np.max(angles))
-        self.__angles = angles()
+        self.__angles = angles
 
     @property
     def angles(self):
