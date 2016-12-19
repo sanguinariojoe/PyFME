@@ -164,11 +164,11 @@ class Cessna172(Aircraft):
         # Roll and yaw moments (see [1]). This time, the coefficients linearly
         # depends on the rudder angle
         Cl = 0.075 * np.outer(
-            [-0.091, -0.082, -0.072, -0.063, -0.053, -0.0432, -0.0333, -0.0233, -0.0033, 0.005, 0.009, 0.015],
-            np.deg2rad(rudder_angles))
+            np.deg2rad(rudder_angles),
+            [-0.091, -0.082, -0.072, -0.063, -0.053, -0.0432, -0.0333, -0.0233, -0.0033, 0.005, 0.009, 0.015])
         Cn = 0.075 * np.outer(
-            [0.211, 0.215, 0.218, 0.22, 0.224, 0.226, 0.228, 0.229, 0.23, 0.23, 0.23, 0.23],
-            np.deg2rad(rudder_angles))
+            np.deg2rad(rudder_angles),
+            [0.211, 0.215, 0.218, 0.22, 0.224, 0.226, 0.228, 0.229, 0.23, 0.23, 0.23, 0.23])
         rudder.add_force_coeff(alpha, Cl, "Cl(alpha)")
         rudder.add_force_coeff(alpha, Cn, "Cn(alpha)")
 
