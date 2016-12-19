@@ -567,7 +567,7 @@ class Flap(Wing):
         interpolator = RectBivariateSpline(self.__angles,
                                            Cf['alphas'],
                                            Cf['values'])
-        return interpolator(self.controller.value, alpha)
+        return interpolator(self.controller.value, alpha)[0, 0]
 
     def calculate_forces_and_moments(self):
         """Compute the forces and moments of the global aircraft collecting all
