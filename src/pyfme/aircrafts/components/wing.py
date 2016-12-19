@@ -37,8 +37,8 @@ class Wing(Component):
     Otherwise an assertion error will be raised.
     """
     def __init__(self, chord, span, Sw, parent,
-                 chord_vec=np.asarray([1, 0, 0]),
-                 span_vec=np.asarray([0, 1, 0]),
+                 chord_vec=np.asarray([1, 0, 0], dtype=np.float),
+                 span_vec=np.asarray([0, 1, 0], dtype=np.float),
                  cog=np.zeros(3, dtype=np.float),
                  mass=0.0,
                  inertia=np.zeros((3, 3), dtype=np.float)):
@@ -132,10 +132,10 @@ class Wing(Component):
         chord_vec : array_like
             Direction of the wing span
         """
-        return self.__dir[0]
+        return self.__dir[0,:]
 
-    @chord.setter
-    def chord_vec(self, span_vec):
+    @chord_vec.setter
+    def chord_vec(self, chord_vec):
         """Set the chord direction vector
 
         Parameters
@@ -144,8 +144,8 @@ class Wing(Component):
             Direction of the wing span
         """
         self.__dir = np.array([chord_vec,
-                               self.__dir[1],
-                               np.cross(chord_vec, self.__dir[1])])
+                               self.__dir[1,:],
+                               np.cross(chord_vec, self.__dir[1,:])])
 
     @property
     def span_vec(self):
@@ -156,9 +156,9 @@ class Wing(Component):
         span_vec : array_like
             Direction of the wing span
         """
-        return self.__dir[1]
+        return self.__dir[1,:]
 
-    @chord.setter
+    @span_vec.setter
     def span_vec(self, span_vec):
         """Set the span direction vector
 
@@ -167,9 +167,9 @@ class Wing(Component):
         span_vec : array_like
             Direction of the wing span
         """
-        self.__dir = np.array([self.__dir[0],
+        self.__dir = np.array([self.__dir[0,:],
                                span_vec,
-                               np.cross(self.__dir[0], span_vec)])
+                               np.cross(self.__dir[0,:], span_vec)])
 
     def add_force_coeff(self, alpha, Cf, name):
         """Register a new force coefficient. The force coefficients are defined
@@ -499,6 +499,14 @@ class Flap(Wing):
             Current equations assume that the global aircraft has a symmetry
             plane (x_b - z_b), thus J_xy and J_yz must be null
         """
+        print(chord_vec, span_vec)
+        if chord_vec is None:
+            assert isinstance(parent, Wing)
+            chord_vec = parent.chord_vec
+        if span_vec is None:
+            assert isinstance(parent, Wing)
+            span_vec = parent.span_vec
+        print(chord_vec, span_vec)
         super().__init__(chord, span, Sw, parent,
                          chord_vec=chord_vec,
                          span_vec=span_vec,
