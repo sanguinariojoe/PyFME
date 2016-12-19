@@ -288,7 +288,7 @@ class Wing(Component):
             'f' if it is a force coefficient, 'm' otherwise
         """
         CF_NAMES = "CD", "CY", "CL", "Cl", "Cm", "Cn"
-        return CF_TYPES[CF_NAMES.index(Cf[3])]
+        return CF_TYPES[CF_NAMES.index(Cf['name'])]
 
     def __get_coeff_vec(self, Cf):
         """Get the direction of an specific force coefficient by its name
