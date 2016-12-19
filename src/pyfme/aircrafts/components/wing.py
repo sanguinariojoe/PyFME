@@ -370,8 +370,8 @@ class Wing(Component):
             d = np.dot((self.span, self.span, self.chord), vec)
             # Get the required paramater
             frame = inspect.currentframe()
-            args, _, _, values = inspect.getargvalues(frame)
-            param = values[args.index(Cf['param'])]
+            _, _, _, values = inspect.getargvalues(frame)
+            param = values[Cf['param']]
             # And get the final equivalent force coeff
             c *= d / (2 * V) * param
 
