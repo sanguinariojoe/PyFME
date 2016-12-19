@@ -417,15 +417,15 @@ class Wing(Component):
         # Compute the forces from the force coefficients
         for Cf in self.__Cf:
             Sw = self.Sw()
-            if __get_coeff_type(Cf) == 'f':
-                f += q_inf * Sw * __solve_coeff(Cf, alpha, beta,
-                                                V, p, q, r, alphadot)
+            if self.__get_coeff_type(Cf) == 'f':
+                f += q_inf * Sw * self.__solve_coeff(Cf, alpha, beta,
+                                                     V, p, q, r, alphadot)
             else:
                 # The moments should be multiplied by the chord or the span
                 d = np.dot((self.span, self.chord, self.span),
                            self.__get_coeff_vec(Cf))
-                m += d * q_inf * Sw * __solve_coeff(Cf, alpha, beta,
-                                                    V, p, q, r, alphadot)
+                m += d * q_inf * Sw * self.__solve_coeff(Cf, alpha, beta,
+                                                         V, p, q, r, alphadot)
 
         return f, m
 
