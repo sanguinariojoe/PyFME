@@ -196,7 +196,14 @@ class Propeller(Component):
 
     def calculate_forces_and_moments(self):
         """Compute the forces and moments of the global aircraft collecting all
-        the subcomponents, and adding the volumetric/gravity force
+        the subcomponents
+
+        Returns
+        -------
+        f : array_like
+            Drag, lateral and Lift forces (N)
+        m : array_like
+            Roll, pitch and yaw moments (N * m)
         """
         f, m = super().calculate_forces_and_moments()
 

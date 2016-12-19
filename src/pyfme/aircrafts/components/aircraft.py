@@ -6,6 +6,7 @@ Distributed under the terms of the MIT License.
 
 from pyfme.environment.environment import Environment
 from pyfme.aircrafts import Component
+from pyfme.utils.anemometry import tas2cas, tas2eas, calculate_alpha_beta_TAS
 import numpy as np
 
 
@@ -81,9 +82,41 @@ class Aircraft(Component):
         """
         return 0.5 * environment.rho * self.TAS**2
 
+    def update(self, controls, system, environment):
+        """Update the aircraft data using the values computed by the simulator
+
+        Parameters
+        ----------
+        controls : dictionary
+            Dictionary with the control values. Outdated data, it is preserved
+            just for backward compatibility.
+        system : System
+            Current simulator system
+        environment : Enviroment
+            Current Environment settings
+        """
+        self.aero_vel = system.vel_body - environment.body_wind
+
+        self.alpha, self.beta, self.TAS = calculate_alpha_beta_TAS(
+            u=aero_vel[0], v=aero_vel[1], w=aero_vel[2])
+
+        self.p, self.q, self.r = system.vel_ang
+
+        # Setting velocities & dynamic pressure
+        self.CAS = tas2cas(self.TAS, environment.p, environment.rho)
+        self.EAS = tas2eas(self.TAS, environment.rho)
+        self.Mach = self.TAS / environment.a
+
     def calculate_forces_and_moments(self):
         """Compute the forces and moments of the global aircraft collecting all
         the subcomponents, and adding the volumetric/gravity force
+
+        Returns
+        -------
+        f : array_like
+            Drag, lateral and Lift forces (N)
+        m : array_like
+            Roll, pitch and yaw moments (N * m)
         """
         f, m = super().calculate_forces_and_moments()
 
