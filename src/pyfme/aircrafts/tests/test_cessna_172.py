@@ -32,3 +32,6 @@ def test_calculate_aero_forces_moments():
     assert_array_almost_equal([l, m, n],
                               [0, -2046.6386, 0],
                               decimal=2)
+
+if __name__ == '__main__':
+    test_calculate_aero_forces_moments()
