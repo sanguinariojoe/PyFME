@@ -423,7 +423,7 @@ class Wing(Component):
             if __get_coeff_type(Cf) == 'f':
                 f += q_inf * Sw * __solve_coeff(Cf, alpha, beta,
                                                 V, p, q, r, alphadot)
-            else self.__get_coeff_type(Cf) == 'm':
+            else:
                 # The moments should be multiplied by the chord or the span
                 d = np.dot((self.span, self.chord, self.span),
                            self.__get_coeff_vec(Cf))
