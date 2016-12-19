@@ -71,6 +71,20 @@ class Aircraft(Component):
         # to set it, instead of using evironment to compute that
         self.__q_inf = None
 
+    @property
+    def q_inf(self):
+        """Get the considered dynamic pressure at infinity (Pa),
+        :math:`\\frac{1}{2} \\rho \\TAS^2`
+
+        Returns
+        -------
+        q_inf : float
+            Considered dynamic pressure at infinity (Pa)
+        """
+        if self.__q_inf is not None:
+            return self.__q_inf
+        return 0.5 * environment.rho * self.TAS**2
+
     @q_inf.setter
     def q_inf(self, q_inf):
         """Impose the considered dynamic pressure at infinity (Pa)
@@ -81,23 +95,6 @@ class Aircraft(Component):
             Considered dynamic pressure at infinity (Pa)
         """
         self.__q_inf = q_inf
-
-    @property
-    def q_inf(self):
-        """Get the considered dynamic pressure at infinity (Pa),
-        :math:`\\frac{1}{2} \\rho \\TAS^2`
-
-        This method is required by `pyfme.simulator`, so it is preserved for
-        backward compatibility
-
-        Returns
-        -------
-        q_inf : float
-            Considered dynamic pressure at infinity (Pa)
-        """
-        if self.__q_inf is not None:
-            return self.__q_inf
-        return 0.5 * environment.rho * self.TAS**2
 
     def update(self, controls, system, environment):
         """Update the aircraft data using the values computed by the simulator
