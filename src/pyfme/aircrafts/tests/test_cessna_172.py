@@ -23,7 +23,12 @@ def test_calculate_aero_forces_moments():
                          'delta_rudder': 0,
                          'delta_t': 0}
 
-    L, D, Y, l, m, n = aircraft._calculate_aero_forces_moments()
+    # Remove the propeller
+    aircraft.components = aircraft.components[1:]
+
+    f, m = aircraft.calculate_forces_and_moments()
+    D, Y, L = f
+    l, m, n = m
 
     assert_array_almost_equal([L, D, Y],
                               [13060.49063, 964.4670, 0.],

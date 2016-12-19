@@ -71,6 +71,9 @@ class Aircraft(Component):
         # to set it, instead of using evironment to compute that
         self.__q_inf = None
 
+        # Let store the environment
+        self.__environment = None
+
     @property
     def q_inf(self):
         """Get the considered dynamic pressure at infinity (Pa),
@@ -83,7 +86,7 @@ class Aircraft(Component):
         """
         if self.__q_inf is not None:
             return self.__q_inf
-        return 0.5 * environment.rho * self.TAS**2
+        return 0.5 * self.__environment.rho * self.TAS**2
 
     @q_inf.setter
     def q_inf(self, q_inf):
@@ -109,6 +112,8 @@ class Aircraft(Component):
         environment : Enviroment
             Current Environment settings
         """
+        self.__environment = environment
+
         self.aero_vel = system.vel_body - environment.body_wind
 
         self.alpha, self.beta, self.TAS = calculate_alpha_beta_TAS(
@@ -135,7 +140,10 @@ class Aircraft(Component):
         f, m = super().calculate_forces_and_moments()
 
         # Add the gravity, which is applied in the global center of gravity
-        ff = environment.gravity_vector * self.mass()
+        if self.__environment is None:
+            return f, m
+
+        ff = self.__environment.gravity_vector * self.mass()
         r = self.cog(use_subcomponents=False) - c.cog()
         mm = np.cross(r, ff)
 
