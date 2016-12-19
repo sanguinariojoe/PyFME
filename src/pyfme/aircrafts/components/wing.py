@@ -399,7 +399,7 @@ class Wing(Component):
                                     aircraft.beta])  # rad
         attack_angles_dot = np.asarray([0.0,
                                         aircraft.alpha_dot,  # rad/s
-                                        aircraft.beta_dot})  # rad/s
+                                        aircraft.beta_dot])  # rad/s
         p = aircraft.p  # rad/s
         q = aircraft.q  # rad/s
         r = aircraft.r  # rad/s
