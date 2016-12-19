@@ -269,7 +269,7 @@ class Wing(Component):
         param = params[params.index("alpha") - 1] if len(params) == 2 else None
 
         self.__Cf.append({'alphas':np.asarray(alpha),
-                          'values'np.asarray(Cf),
+                          'values':np.asarray(Cf),
                           'name':cname,
                           'param':param})
 
