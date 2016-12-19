@@ -67,6 +67,21 @@ class Aircraft(Component):
         self.alpha_dot = 0  # rad/s
         self.beta_dot = 0  # rad/s
 
+        # Provided an "uninitialized" q_inf variable in order to allow the user
+        # to set it, instead of using evironment to compute that
+        self.__q_inf = None
+
+    @q_inf.setter
+    def q_inf(self, q_inf):
+        """Impose the considered dynamic pressure at infinity (Pa)
+
+        Parameters
+        ----------
+        q_inf : float
+            Considered dynamic pressure at infinity (Pa)
+        """
+        self.__q_inf = q_inf
+
     @property
     def q_inf(self):
         """Get the considered dynamic pressure at infinity (Pa),
@@ -80,6 +95,8 @@ class Aircraft(Component):
         q_inf : float
             Considered dynamic pressure at infinity (Pa)
         """
+        if self.__q_inf is not None:
+            return self.__q_inf
         return 0.5 * environment.rho * self.TAS**2
 
     def update(self, controls, system, environment):
