@@ -356,7 +356,7 @@ class Wing(Component):
             Direction of the force coefficient
         """
         # First, let's interpolate the value of the raw coefficient
-        c = _raw_coeff(Cf, alpha)
+        c = self._raw_coeff(Cf, alpha)
         # Get the force direction
         vec = self.__get_coeff_vec(Cf)
         # Multiply the coeffcient by the required parameters
