@@ -155,7 +155,7 @@ class Aircraft(Component):
             return f, m
 
         ff = self.environment.gravity_vector * self.mass()
-        r = self.cog(use_subcomponents=False) - c.cog()
+        r = self.cog(use_subcomponents=False) - self.cog()
         mm = np.cross(r, ff)
 
         return f + ff, m + mm
