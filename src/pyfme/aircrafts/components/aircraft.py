@@ -99,6 +99,17 @@ class Aircraft(Component):
         """
         self.__q_inf = q_inf
 
+    @property
+    def environment(self):
+        """Get the current environment.
+
+        Returns
+        -------
+        environment : Environment
+            Current environment, None if it is not available
+        """
+        return self.__environment
+
     def update(self, controls, system, environment):
         """Update the aircraft data using the values computed by the simulator
 
@@ -140,10 +151,10 @@ class Aircraft(Component):
         f, m = super().calculate_forces_and_moments()
 
         # Add the gravity, which is applied in the global center of gravity
-        if self.__environment is None:
+        if self.environment is None:
             return f, m
 
-        ff = self.__environment.gravity_vector * self.mass()
+        ff = self.environment.gravity_vector * self.mass()
         r = self.cog(use_subcomponents=False) - c.cog()
         mm = np.cross(r, ff)
 

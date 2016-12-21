@@ -207,17 +207,21 @@ class Propeller(Component):
         """
         f, m = super().calculate_forces_and_moments()
 
+        aircraft = self.top_node()
+        assert isinstance(aircraft, Aircraft)
+        if aircraft.environment is None:
+            raise Warning('aircraft.environment is None')
+            return f, m
+
         # Get the airspeed (just in case we have an available aircraft)
         V = np.zeros(3, dtype=np.float)
-        aircraft = self.top_node()
-        if isinstance(aircraft, Aircraft):
-            # FIXME: Vectorial velocities should be considered to can model
-            # other aircraft types, like helicopters
-            V[0] = aircraft.TAS
+        # FIXME: Vectorial velocities should be considered to can model
+        # other aircraft types, like helicopters
+        V[0] = aircraft.TAS
         V = np.dot(V, self.__vec)
 
         delta_t = self.controller.value
-        rho = environment.rho
+        rho = aircraft.environment.rho
         omega = np.interp(delta_t, self.__delta_t, self.__omega)  # rpm
         omega_RAD = (omega * 2.0 * np.pi) / 60.0  # rad/s
 
