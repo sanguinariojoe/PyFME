@@ -190,9 +190,12 @@ class Cessna172(Aircraft):
                          'delta_aileron': 0,
                          'delta_rudder': 0,
                          'delta_t': 0}
-        self.control_limits = {'delta_elevator': (-26, 28),  # deg
-                               'delta_aileron': (-15, 20),  # deg
-                               'delta_rudder': (-16, 16),  # deg
+        self.control_limits = {'delta_elevator': (np.deg2rad(-26),
+                                                  np.deg2rad(28)),  # rad
+                               'delta_aileron': (np.deg2rad(-15),
+                                                 np.deg2rad(20)),  # rad
+                               'delta_rudder': (np.deg2rad(-16),
+                                                np.deg2rad(16)),  # rad
                                'delta_t': (0, 1)}  # non-dimensional
 
     def update(self, controls, system, environment):
@@ -214,8 +217,12 @@ class Cessna172(Aircraft):
         for control_name, control_value in controls.items():
             controllers = self.get_controllers(control_name)
             for c in controllers:
-                c.value = control_value
-                self.controls[control_name] = c.value
+                if control_name == 'delta_t':
+                    c.value = control_value
+                    self.controls[control_name] = c.value
+                else:
+                    c.value = np.rad2deg(control_value)
+                    self.controls[control_name] = np.deg2rad(c.value)
         super().update(controls, system, environment)
 
     def calculate_forces_and_moments(self):
@@ -239,7 +246,7 @@ class Cessna172(Aircraft):
         wing = self.components[-1]
         c = wing.chord
         b = wing.span
-        m_fact = np.array([b, c, b], dtype=np.float) * f_fact
+        m_fact = np.array([b, c, b], dtype=np.float64) * f_fact
 
         self.CD, self.CY, self.CL = f / f_fact
         self.Cl, self.Cm, self.Cn = m / m_fact
