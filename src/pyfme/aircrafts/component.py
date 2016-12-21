@@ -425,7 +425,7 @@ class Component(Structure):
         """
         self.__controller = controller
 
-    def get_controllers(wildcard='*'):
+    def get_controllers(self, wildcard='*'):
         """Get all the controllers of this component and children, with a name
         matching the wildcard.
 
