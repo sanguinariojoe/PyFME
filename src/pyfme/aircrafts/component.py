@@ -156,11 +156,11 @@ class Structure(object):
             aircraft, repect to o point
         """
         if o is None:
-            return self.inertia
+            return self.__inertia
 
-        r = o - self.cog
-        j = self.mass * (np.dot(r, r) * np.eye(3) + np.outer(r, r))
-        return self.inertia + j
+        r = o - self.__cog
+        j = self.__mass * (np.dot(r, r) * np.eye(3) + np.outer(r, r))
+        return self.__inertia + j
 
 
 class Controller(object):
@@ -464,7 +464,7 @@ class Component(Structure):
         if not use_subcomponents or self.mass() == 0.0:
             return super().cog
 
-        m_cog = np.zeros(3, dtype=np.float)
+        m_cog = np.zeros(3, dtype=np.float64)
         for c in self.components:
             m_cog += c.mass() * c.cog()
 
@@ -525,7 +525,7 @@ class Component(Structure):
         # one. Otherwise, it cannot be granted the sign of the displacement
         # Inertia moment.
         cog = self.cog()
-        inertia = np.zeros((3,3), dtype=np.float)
+        inertia = np.zeros((3,3), dtype=np.float64)
         for c in self.components:
             inertia += c.inertia(cog)
 
@@ -584,8 +584,8 @@ class Component(Structure):
             Moments integrated from all the subcomponents [N, N, N], respect to
             cog, i.e. ``self.cog(use_subcomponents=False)``
         """
-        f = np.zeros(3, dtype=np.float)
-        m = np.zeros(3, dtype=np.float)
+        f = np.zeros(3, dtype=np.float64)
+        m = np.zeros(3, dtype=np.float64)
         cog = self.cog(use_subcomponents=False)
         for c in self.components:
             ff, mm = c.calculate_forces_and_moments()
