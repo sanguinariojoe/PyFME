@@ -8,6 +8,7 @@ from pyfme.environment.environment import Environment
 from pyfme.aircrafts import Component, Controller
 from pyfme.aircrafts.component import Structure
 from pyfme.aircrafts.components import Aircraft
+from pyfme.utils.coordinates import wind2body
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
 import re
@@ -418,8 +419,9 @@ class Wing(Component):
         for Cf in self.__Cf:
             Sw = self.Sw()
             if self.__get_coeff_type(Cf) == 'f':
-                f += q_inf * Sw * self.__solve_coeff(Cf, alpha, beta,
+                ff = q_inf * Sw * self.__solve_coeff(Cf, alpha, beta,
                                                      V, p, q, r, alphadot)
+                f += wind2body(ff, aircraft.alpha, aircraft.beta)
             else:
                 # The moments should be multiplied by the chord or the span
                 d = np.dot((self.span, self.chord, self.span),
