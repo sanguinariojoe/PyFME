@@ -39,11 +39,11 @@ class Wing(Component):
     Otherwise an assertion error will be raised.
     """
     def __init__(self, chord, span, Sw, parent,
-                 chord_vec=np.asarray([1, 0, 0], dtype=np.float),
-                 span_vec=np.asarray([0, 1, 0], dtype=np.float),
-                 cog=np.zeros(3, dtype=np.float),
+                 chord_vec=np.asarray([1, 0, 0], dtype=np.float64),
+                 span_vec=np.asarray([0, 1, 0], dtype=np.float64),
+                 cog=np.zeros(3, dtype=np.float64),
                  mass=0.0,
-                 inertia=np.zeros((3, 3), dtype=np.float)):
+                 inertia=np.zeros((3, 3), dtype=np.float64)):
         """Create a new wing
 
         Parameters
@@ -362,6 +362,10 @@ class Wing(Component):
         vec = self.__get_coeff_vec(Cf)
         # Multiply the coeffcient by the required parameters
         if Cf['param'] is None:
+            if Cf['name'] in ('CD', 'CL'):
+                # Special case of lift and drag forces, which direction is
+                # swaped
+                c *= -1
             if Cf['name'] in ('CY', 'Cl', 'Cn'):
                 # Special case of transversal force, roll moment and yaw moment,
                 # which depends on the sideslip angle
@@ -428,7 +432,6 @@ class Wing(Component):
                            self.__get_coeff_vec(Cf))
                 m += d * q_inf * Sw * self.__solve_coeff(Cf, alpha, beta,
                                                          V, p, q, r, alphadot)
-
         return f, m
 
 
@@ -456,9 +459,9 @@ class Flap(Wing):
                  Sw=0.0,
                  chord_vec=None,
                  span_vec=None,
-                 cog=np.zeros(3, dtype=np.float),
+                 cog=np.zeros(3, dtype=np.float64),
                  mass=0.0,
-                 inertia=np.zeros((3, 3), dtype=np.float)):
+                 inertia=np.zeros((3, 3), dtype=np.float64)):
         """Create a new flap
 
         Parameters

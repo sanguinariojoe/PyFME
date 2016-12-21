@@ -18,9 +18,9 @@ class Aircraft(Component):
     like the hull, wings, propellers, flaps...
     """
     def __init__(self,
-                 cog=np.zeros(3, dtype=np.float),
+                 cog=np.zeros(3, dtype=np.float64),
                  mass=0.0,
-                 inertia=np.zeros((3, 3), dtype=np.float),
+                 inertia=np.zeros((3, 3), dtype=np.float64),
                  Sw=0.0):
         """Create a new aircraft
 
@@ -48,7 +48,7 @@ class Aircraft(Component):
         self.CAS = 0  # Calibrated Air Speed.
         self.EAS = 0  # Equivalent Air Speed.
         self.Mach = 0  # Mach number
-        self.aero_vel = np.zeros(3, dtype=np.float)
+        self.aero_vel = np.zeros(3, dtype=np.float64)
 
         # Angular velocities
         self.p = 0  # rad/s
@@ -84,7 +84,7 @@ class Aircraft(Component):
         q_inf : float
             Considered dynamic pressure at infinity (Pa)
         """
-        if self.__q_inf is not None:
+        if self.__environment is None:
             return self.__q_inf
         return 0.5 * self.__environment.rho * self.TAS**2
 

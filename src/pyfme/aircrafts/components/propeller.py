@@ -18,9 +18,9 @@ class Propeller(Component):
     def __init__(self, r, omega, J, Ct,
                  vec=np.asarray([1, 0, 0]),
                  controller_name='delta_t',
-                 cog=np.zeros(3, dtype=np.float),
+                 cog=np.zeros(3, dtype=np.float64),
                  mass=0.0,
-                 inertia=np.zeros((3, 3), dtype=np.float),
+                 inertia=np.zeros((3, 3), dtype=np.float64),
                  Sw=0.0,
                  parent=None):
         """Create a new propeller
@@ -214,7 +214,7 @@ class Propeller(Component):
             return f, m
 
         # Get the airspeed (just in case we have an available aircraft)
-        V = np.zeros(3, dtype=np.float)
+        V = np.zeros(3, dtype=np.float64)
         # FIXME: Vectorial velocities should be considered to can model
         # other aircraft types, like helicopters
         V[0] = aircraft.TAS
