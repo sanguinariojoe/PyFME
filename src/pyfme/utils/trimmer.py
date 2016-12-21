@@ -95,7 +95,7 @@ def steady_state_flight_trimmer(aircraft, system, env,
 
     trimmed_ac.TAS = TAS
     trimmed_ac.Mach = aircraft.TAS / env.a
-    trimmed_ac.q_inf = 0.5 * trimmed_env.rho * aircraft.TAS ** 2
+    trimmed_ac.q_inf = 0.5 * trimmed_env.rho * trimmed_ac.TAS ** 2
 
     # Update environment
     trimmed_env.update(trimmed_sys)
@@ -121,8 +121,8 @@ def steady_state_flight_trimmer(aircraft, system, env,
     args = (trimmed_sys, trimmed_ac, trimmed_env,
             controls2trim, gamma, turn_rate)
 
-    lower_bounds = [-0.5, -0.25]  # Alpha and beta upper bounds.
-    upper_bounds = [+0.5, +0.25]  # Alpha and beta lower bounds.
+    lower_bounds = [-0.5, -0.25]  # Alpha and beta lower bounds.
+    upper_bounds = [+0.5, +0.25]  # Alpha and beta upper bounds.
     for ii in controls2trim:
         lower_bounds.append(aircraft.control_limits[ii][0])
         upper_bounds.append(aircraft.control_limits[ii][1])
@@ -235,5 +235,10 @@ def trimming_cost_func(trimmed_params, system, ac, env, controls2trim,
 
     forces, moments = ac.calculate_forces_and_moments()
     vel = np.concatenate((system.vel_body[:], system.vel_ang[:]))
-    output = system.lamceq(0, vel, ac.mass, ac.inertia, forces, moments)
+    output = system.lamceq(0,
+                           vel,
+                           ac.mass(),
+                           ac.inertia(ac.cog(use_subcomponents=False)),
+                           forces,
+                           moments)
     return output
