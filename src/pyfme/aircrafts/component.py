@@ -461,7 +461,7 @@ class Component(Structure):
         cog : array_like
             Center of gravity, eventually modified by the subcomponents
         """
-        if not use_subcomponents:
+        if not use_subcomponents or self.mass() == 0.0:
             return super().cog
 
         m_cog = np.zeros(3, dtype=np.float)
