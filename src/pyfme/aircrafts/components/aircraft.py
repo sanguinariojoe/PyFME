@@ -117,7 +117,7 @@ class Aircraft(Component):
         self.aero_vel = system.vel_body - environment.body_wind
 
         self.alpha, self.beta, self.TAS = calculate_alpha_beta_TAS(
-            u=aero_vel[0], v=aero_vel[1], w=aero_vel[2])
+            u=self.aero_vel[0], v=self.aero_vel[1], w=self.aero_vel[2])
 
         self.p, self.q, self.r = system.vel_ang
 
