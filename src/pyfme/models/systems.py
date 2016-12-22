@@ -230,8 +230,16 @@ class EulerFlatEarth(System):
         Performs integration step for actual_time + dt and returns the state
         vector
         """
-        mass = aircraft.mass
-        inertia = aircraft.inertia
+        mass = aircraft.mass()
+        inertia = aircraft.inertia()
+        # TODO: Storing total_forces and total_moments as attributes of the
+        # aircraft is not a good practice at all:
+        # 1.- It is not actually an attribute of the aircraft, but a dynamic
+        #     ephemeral state variable
+        # 2.- It may hide errors on the implementation, because a non properly
+        #     updated value of the forces would still become valid at this point
+        # In the new implementation of the aircrafts, these attributes have been
+        # deprecated, and just kept at Cessna-172 for backward compatibility
         forces = aircraft.total_forces
         moments = aircraft.total_moments
 
