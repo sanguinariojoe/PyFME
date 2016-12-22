@@ -328,7 +328,7 @@ class Wing(Component):
         """
         return np.interp(alpha, Cf['alphas'], Cf['values'])
 
-    def __solve_coeff(self, Cf, alpha, beta, V, p, q, r, alphadot):
+    def __solve_coeff(self, Cf, alpha, beta, V, p, q, r, alphadot, beta_effect):
         """Get the Force coeffcient vectorial value, i.e. with orientation
         implicitely included.
 
@@ -350,6 +350,10 @@ class Wing(Component):
             Yaw rate of change (rad/s)
         alphadot : float
             Angle of attack rate of change (rad/s)
+        beta_effect : bool
+            If True, the force and moment coeffs, CY, Cl and Cn will be
+            multiplied by the sideslip angle. False otherwise. In general this
+            is True for Wing and False for Flap
 
         Returns
         -------
@@ -366,9 +370,12 @@ class Wing(Component):
                 # Special case of lift and drag forces, which direction is
                 # swaped
                 c *= -1
-            if Cf['name'] in ('CY', 'Cl', 'Cn'):
+            if Cf['name'] in ('CY', 'Cl', 'Cn') and beta_effect:
                 # Special case of transversal force, roll moment and yaw moment,
-                # which depends on the sideslip angle
+                # which naturally depends on the sideslip angle
+                if self.controller is not None and self.controller.name == "delta_aileron" and Cf['name'] == 'Cl':
+                    if self.controller.value != 0.0:
+                        print('*** Cl: ', 'BETA!', isinstance(self, Flap))
                 c *= beta
         else:
             # Get the characteristic length (chord or span)
@@ -383,9 +390,16 @@ class Wing(Component):
         # Return it as a vector
         return c * vec
 
-    def calculate_forces_and_moments(self):
+    def calculate_forces_and_moments(self, beta_effect=True):
         """Compute the forces and moments of the global aircraft collecting all
         the subcomponents
+
+        Parameters
+        ----------
+        beta_effect : bool
+            If True, the force and moment coeffs, CY, Cl and Cn will be
+            multiplied by the sideslip angle. False otherwise. In general this
+            is True for Wing and False for Flap
 
         Returns
         -------
@@ -424,14 +438,16 @@ class Wing(Component):
             Sw = self.Sw()
             if self.__get_coeff_type(Cf) == 'f':
                 ff = q_inf * Sw * self.__solve_coeff(Cf, alpha, beta,
-                                                     V, p, q, r, alphadot)
+                                                     V, p, q, r, alphadot,
+                                                     beta_effect)
                 f += wind2body(ff, aircraft.alpha, aircraft.beta)
             else:
                 # The moments should be multiplied by the chord or the span
                 d = np.dot((self.span, self.chord, self.span),
                            self.__get_coeff_vec(Cf))
                 m += d * q_inf * Sw * self.__solve_coeff(Cf, alpha, beta,
-                                                         V, p, q, r, alphadot)
+                                                         V, p, q, r, alphadot,
+                                                         beta_effect)
         return f, m
 
 
@@ -571,7 +587,8 @@ class Flap(Wing):
         """
         interpolator = RectBivariateSpline(self.__angles,
                                            Cf['alphas'],
-                                           Cf['values'])
+                                           Cf['values'],
+                                           kx=1, ky=1)
         return interpolator(self.controller.value, alpha)[0, 0]
 
     def calculate_forces_and_moments(self):
@@ -607,7 +624,7 @@ class Flap(Wing):
             Structure.Sw.fset(self, wing.Sw(use_subcomponents=False))
 
         # Compute the forces and moments
-        f, m = super().calculate_forces_and_moments()
+        f, m = super().calculate_forces_and_moments(beta_effect=False)
 
         # Restore the wetted surface
         if is_Sw_zero:
